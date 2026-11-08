@@ -4,34 +4,422 @@
   <meta charset="utf-8" />
   <title>Screen Share - PC</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script>
+    try { if (localStorage.getItem("theme") === "dark") document.documentElement.dataset.theme = "dark"; } catch (e) {}
+  </script>
   <style>
-    body { text-align: center; background: #111; color: #fff; font-family: Arial, Helvetica, sans-serif; padding: 20px; }
-    video { width: 80%; margin: 10px 0; background: #000; border-radius: 10px; max-height: 45vh; }
-    img { margin-top: 20px; border: 4px solid white; border-radius: 10px; max-width: 300px; }
-    #videos { margin-top: 20px; }
-    #connectionStatus { color: #b8d7ff; overflow-wrap: anywhere; }
+    /* Cores registadas para a mudança de tema ser animada (suave) */
+    @property --bg { syntax: "<color>"; inherits: true; initial-value: #e8ebf3; }
+    @property --surface { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+    @property --ink { syntax: "<color>"; inherits: true; initial-value: #131a33; }
+    @property --muted { syntax: "<color>"; inherits: true; initial-value: #5b6482; }
+    @property --line { syntax: "<color>"; inherits: true; initial-value: #d3d8e6; }
+    @property --accent { syntax: "<color>"; inherits: true; initial-value: #2f4bff; }
+    @property --accent-ink { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+    @property --ok { syntax: "<color>"; inherits: true; initial-value: #0e8f5a; }
+    @property --screen { syntax: "<color>"; inherits: true; initial-value: #0b0f1e; }
+    @property --screen-ink { syntax: "<color>"; inherits: true; initial-value: #8f98bb; }
+    @property --shadow-a { syntax: "<color>"; inherits: true; initial-value: rgba(19, 26, 51, 0.06); }
+    @property --shadow-b { syntax: "<color>"; inherits: true; initial-value: rgba(19, 26, 51, 0.18); }
+    @property --glow1 { syntax: "<color>"; inherits: true; initial-value: rgba(47, 75, 255, 0.20); }
+    @property --glow2 { syntax: "<color>"; inherits: true; initial-value: rgba(200, 134, 27, 0.38); }
+    @property --glow3 { syntax: "<color>"; inherits: true; initial-value: rgba(200, 134, 27, 0.26); }
+    @property --glass { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.52); }
+    @property --glass-line { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.75); }
+    @property --glass-soft { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.45); }
+    @property --dot { syntax: "<color>"; inherits: true; initial-value: rgba(19, 26, 51, 0.16); }
+
+    :root {
+      color-scheme: light;
+      --bg: #e8ebf3;
+      --surface: #ffffff;
+      --ink: #131a33;
+      --muted: #5b6482;
+      --line: #d3d8e6;
+      --accent: #2f4bff;
+      --accent-ink: #ffffff;
+      --ok: #0e8f5a;
+      --screen: #0b0f1e;
+      --screen-ink: #8f98bb;
+      --shadow-a: rgba(19, 26, 51, 0.06);
+      --shadow-b: rgba(19, 26, 51, 0.18);
+      --glow1: rgba(47, 75, 255, 0.20);
+      --glow2: rgba(200, 134, 27, 0.38);
+      --glow3: rgba(200, 134, 27, 0.26);
+      --glass: rgba(255, 255, 255, 0.52);
+      --glass-line: rgba(255, 255, 255, 0.75);
+      --glass-soft: rgba(255, 255, 255, 0.45);
+      --dot: rgba(19, 26, 51, 0.16);
+      --shadow: 0 1px 2px var(--shadow-a), 0 12px 32px -12px var(--shadow-b);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0e1222;
+      --surface: #171c33;
+      --ink: #e9ecfa;
+      --muted: #98a1c4;
+      --line: #2a3152;
+      --accent: #7c8cff;
+      --accent-ink: #0e1222;
+      --ok: #3ddc97;
+      --screen: #05070f;
+      --screen-ink: #7c86ab;
+      --shadow-a: rgba(0, 0, 0, 0.30);
+      --shadow-b: rgba(0, 0, 0, 0.60);
+      --glow1: rgba(88, 110, 255, 0.28);
+      --glow2: rgba(214, 150, 36, 0.34);
+      --glow3: rgba(214, 150, 36, 0.24);
+      --glass: rgba(34, 40, 74, 0.45);
+      --glass-line: rgba(255, 255, 255, 0.14);
+      --glass-soft: rgba(255, 255, 255, 0.07);
+      --dot: rgba(190, 200, 255, 0.16);
+    }
+    :root.ready { transition: --bg 0.55s ease, --surface 0.55s ease, --ink 0.55s ease, --muted 0.55s ease, --line 0.55s ease, --accent 0.55s ease, --accent-ink 0.55s ease, --ok 0.55s ease, --screen 0.55s ease, --screen-ink 0.55s ease, --shadow-a 0.55s ease, --shadow-b 0.55s ease, --glow1 0.55s ease, --glow2 0.55s ease, --glow3 0.55s ease, --glass 0.55s ease, --glass-line 0.55s ease, --glass-soft 0.55s ease, --dot 0.55s ease; }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+      line-height: 1.5;
+    }
+
+    /* Fundo: luz suave nos cantos e uma grelha de pontos que se desvanece */
+    body::before, body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+    body::before {
+      background:
+        radial-gradient(900px 520px at 8% -8%, var(--glow1), transparent 65%),
+        radial-gradient(620px 460px at 88% 22%, var(--glow3), transparent 70%),
+        radial-gradient(820px 560px at 96% 108%, var(--glow2), transparent 65%),
+        radial-gradient(560px 420px at 6% 78%, var(--glow1), transparent 70%);
+    }
+    body::after {
+      background-image: radial-gradient(circle, var(--dot) 1.2px, transparent 1.6px);
+      background-size: 24px 24px;
+      -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 40%, #000 25%, transparent 100%);
+      mask-image: radial-gradient(ellipse 75% 70% at 50% 40%, #000 25%, transparent 100%);
+    }
+    .page { position: relative; max-width: 1120px; margin: 0 auto; padding: 28px 20px 48px; }
+
+    /* Cabeçalho */
+    .top {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 32px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 40px; height: 40px; color: var(--accent); flex: none; }
+    h1 { margin: 0; font-size: 1.4rem; font-weight: 750; letter-spacing: -0.02em; }
+
+    .status {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px 6px 12px; border-radius: 999px;
+      background: var(--surface); border: 1px solid var(--line);
+      font-size: 0.9rem; font-weight: 600;
+    }
+    .status i {
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--muted); animation: pulse 1.8s ease-in-out infinite;
+    }
+    .status[data-state="live"] i { background: var(--ok); animation: none; }
+    @keyframes pulse { 50% { opacity: 0.3; } }
+
+
+    /* Botão de tema (sol / lua) */
+    .tools { display: flex; align-items: center; gap: 12px; }
+    .toggle {
+      position: relative; flex: none; width: 68px; height: 36px; padding: 0;
+      border-radius: 999px; border: 1px solid var(--glass-line);
+      background: var(--glass-soft); filter: none;
+      box-shadow: inset 0 1px 2px var(--shadow-a);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    }
+    .toggle:hover { filter: none; }
+    .knob {
+      position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 50%;
+      background: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      display: grid; place-items: center;
+      transition: transform 0.45s cubic-bezier(0.4, 0.1, 0.2, 1), background-color 0.45s ease;
+    }
+    .knob svg { grid-area: 1 / 1; width: 18px; height: 18px; transition: opacity 0.3s ease, transform 0.5s ease; }
+    .sun { color: #c8861b; }
+    .moon { color: #4a5bd8; opacity: 0; transform: rotate(-70deg) scale(0.5); }
+    :root[data-theme="dark"] .knob { transform: translateX(32px); background: #e9ecfa; }
+    :root[data-theme="dark"] .sun { opacity: 0; transform: rotate(90deg) scale(0.5); }
+    :root[data-theme="dark"] .moon { opacity: 1; transform: none; }
+
+    /* Cartão de ligação */
+    .layout { display: grid; gap: 24px; }
+    .connect {
+      min-width: 0; border-radius: 28px;
+      background: var(--glass);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--glass-line);
+      box-shadow: inset 0 1px 0 var(--glass-line), var(--shadow);
+    }
+    h2 { margin: 0 0 16px; font-weight: 750; letter-spacing: -0.02em; line-height: 1.15; }
+    .steps { margin: 0 0 24px; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 10px; }
+    .steps li {
+      counter-increment: s; display: flex; align-items: center; gap: 12px; color: var(--muted);
+    }
+    .steps li::before {
+      content: counter(s); flex: none; display: grid; place-items: center;
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--glass-soft); color: var(--accent); font-size: 0.85rem; font-weight: 750;
+    }
+
+    /* QR com cantos de visor */
+    .qrwrap { position: relative; padding: 16px; width: fit-content; margin: 0 auto; }
+    .qrwrap::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      --c: var(--accent);
+      background:
+        linear-gradient(var(--c), var(--c)) top left / 30px 4px no-repeat,
+        linear-gradient(var(--c), var(--c)) top left / 4px 30px no-repeat,
+        linear-gradient(var(--c), var(--c)) top right / 30px 4px no-repeat,
+        linear-gradient(var(--c), var(--c)) top right / 4px 30px no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom left / 30px 4px no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom left / 4px 30px no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom right / 30px 4px no-repeat,
+        linear-gradient(var(--c), var(--c)) bottom right / 4px 30px no-repeat;
+    }
+    .qr { background: #ffffff; border-radius: 12px; padding: 10px; border: 1px solid var(--line); }
+    .qr img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+
+    .linkrow { display: flex; gap: 8px; align-items: stretch; }
+    .linkrow code {
+      flex: 1; min-width: 0; padding: 9px 12px; border-radius: 10px;
+      background: var(--glass-soft); border: 1px solid var(--glass-line);
+      font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      display: flex; align-items: center;
+    }
+    button {
+      font: inherit; font-weight: 650; font-size: 0.9rem; cursor: pointer;
+      padding: 9px 16px; border-radius: 10px; border: 0;
+      background: var(--accent); color: var(--accent-ink);
+    }
+    button:hover { filter: brightness(1.08); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+    /* Estado: à espera (só o QR) */
+    body[data-state="waiting"] .stage { display: none; }
+    body[data-state="waiting"] .connect {
+      max-width: 860px; width: 100%; margin: 24px auto 0; padding: 40px;
+      display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 48px; align-items: center;
+    }
+    body[data-state="waiting"] h2 { font-size: clamp(1.7rem, 3.2vw, 2.3rem); }
+    body[data-state="waiting"] .qrwrap { width: 300px; }
+
+    /* Estado: ligado (ecrã e câmara em destaque) */
+    body[data-state="live"] .layout { grid-template-columns: 240px minmax(0, 1fr); align-items: start; }
+    body[data-state="live"] .connect { padding: 20px; }
+    body[data-state="live"] h2 { font-size: 1.1rem; }
+    body[data-state="live"] .steps { display: none; }
+    body[data-state="live"] .qrwrap { width: 160px; padding: 8px; margin-bottom: 16px; }
+    body[data-state="live"] .qrwrap::before { display: none; }
+    body[data-state="live"] .qr { padding: 6px; }
+    body[data-state="live"] .linkrow { flex-direction: column; }
+    body[data-state="live"] .linkrow code { min-height: 38px; }
+
+    /* Ecrã e câmara */
+    .stage { display: flex; gap: 28px; align-items: flex-end; justify-content: center; flex-wrap: wrap; }
+    figure { margin: 0; }
+    figcaption { margin-top: 12px; text-align: center; font-size: 0.9rem; font-weight: 600; color: var(--muted); }
+
+    .bezel {
+      position: relative; height: min(78vh, 720px); aspect-ratio: 9 / 19;
+      background: var(--screen); border: 9px solid var(--ink);
+      border-radius: 40px; overflow: hidden; box-shadow: var(--shadow);
+    }
+    .cam {
+      position: relative; width: 240px; aspect-ratio: 3 / 4;
+      background: var(--screen); border: 3px solid var(--line);
+      border-radius: 20px; overflow: hidden; box-shadow: var(--shadow);
+    }
+    video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--screen); }
+    .cam video { object-fit: cover; }
+
+    .empty {
+      position: absolute; inset: 0; display: grid; place-content: center;
+      padding: 16px; text-align: center; color: var(--screen-ink); font-size: 0.9rem;
+    }
+    .has-video .empty { display: none; }
+
+    /* Ampliar ecrã / câmara */
+    .has-video { cursor: zoom-in; }
+    .has-video:hover { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .close {
+      display: none; position: absolute; top: 16px; right: 16px; z-index: 2;
+      width: 44px; height: 44px; padding: 0; border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65); color: #fff; place-items: center;
+    }
+    .close svg { width: 20px; height: 20px; }
+    .expanded {
+      position: fixed !important; inset: 0; z-index: 100;
+      width: 100vw; height: 100vh; height: 100dvh; aspect-ratio: auto;
+      border: 0; border-radius: 0; cursor: default; outline: 0 !important; box-shadow: none;
+    }
+    .expanded video { object-fit: contain; }
+    .expanded .close { display: grid; }
+
+    @media (max-width: 860px) {
+      body[data-state="waiting"] .connect {
+        grid-template-columns: minmax(0, 1fr); gap: 24px; padding: 28px 24px; margin-top: 8px;
+      }
+      body[data-state="waiting"] .qrwrap { width: min(300px, 100%); }
+      body[data-state="live"] .layout { grid-template-columns: minmax(0, 1fr); }
+      body[data-state="live"] .connect { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: center; }
+      body[data-state="live"] .qrwrap { margin: 0; }
+      .bezel { height: min(64vh, 540px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .status i { animation: none; }
+      :root.ready { transition: none; }
+      .knob, .knob svg { transition: none; }
+    }
   </style>
 </head>
-<body>
-  <h1>Screen Share</h1>
-  <p>Abre este site no PC e escaneia o QR com o telemóvel (ou partilha o link):</p>
-  <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR Code">
-  <p>Link da sessão: <code id="link">{{ mobile_url }}</code></p>
-  <p id="connectionStatus" role="status">A ligar ao servidor…</p>
+<body data-state="waiting">
+  <div class="page">
+    <header class="top">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect x="2" y="6" width="28" height="19" rx="3" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M10 33h12M16 25v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="24" y="14" width="13" height="22" rx="3" fill="var(--bg)" stroke="currentColor" stroke-width="2.5"/>
+          <circle cx="30.5" cy="32" r="1.4" fill="currentColor"/>
+        </svg>
+        <h1>Screen Share</h1>
+      </div>
+      <div class="tools">
+        <span class="status" id="status" data-state="waiting" role="status" aria-live="polite">
+          <i></i><span id="statusText">À espera do telemóvel</span>
+        </span>
+        <button type="button" class="toggle" id="themeToggle" role="switch" aria-checked="false" aria-label="Tema escuro" title="Mudar entre claro e escuro">
+          <span class="knob">
+            <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+            <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+          </span>
+        </button>
+      </div>
+    </header>
 
-  <div id="videos">
-    <h3>📱 Ecrã do telemóvel</h3>
-    <video id="screenVideo" autoplay playsinline muted></video>
-    <h3>🎥 Câmara do telemóvel</h3>
-    <video id="cameraVideo" autoplay playsinline muted></video>
+    <main class="layout">
+      <section class="connect">
+        <div class="qrwrap">
+          <div class="qr">
+            <img src="data:image/png;base64,{{ qr_b64 }}" alt="QR code para ligar o telemóvel">
+          </div>
+        </div>
+        <div class="info">
+          <h2 id="connectTitle">Liga o telemóvel ao PC</h2>
+          <ol class="steps">
+            <li>Lê o QR code com a câmara do telemóvel.</li>
+            <li>Toca em Começar.</li>
+            <li>Aceita partilhar o ecrã e a câmara.</li>
+          </ol>
+          <div class="linkrow">
+            <code id="link">http://{{ request.host }}/session/{{ session_id }}</code>
+            <button type="button" id="copyBtn">Copiar</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="stage" aria-label="Ecrã e câmara do telemóvel">
+        <figure>
+          <div class="bezel" id="screenBox" role="button" tabindex="0" aria-label="Ecrã do telemóvel. Clica para ampliar.">
+            <button type="button" class="close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+            <video id="screenVideo" autoplay playsinline muted></video>
+            <div class="empty">O ecrã do telemóvel aparece aqui.</div>
+          </div>
+          <figcaption>Ecrã</figcaption>
+        </figure>
+        <figure>
+          <div class="cam" id="cameraBox" role="button" tabindex="0" aria-label="Câmara do telemóvel. Clica para ampliar.">
+            <button type="button" class="close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+            <video id="cameraVideo" autoplay playsinline muted></video>
+            <div class="empty">A câmara aparece aqui.</div>
+          </div>
+          <figcaption>Câmara</figcaption>
+        </figure>
+      </section>
+    </main>
   </div>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/static/script.js"></script>
   <script>
     const pcPage = true;
-    const sessionId = {{ session_id | tojson }};
+    const sessionId = "{{ session_id }}";
     startConnection(pcPage, sessionId);
+
+    // Tema claro / escuro (guarda a escolha neste browser)
+    (function () {
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
+      const sync = () => toggle.setAttribute("aria-checked", root.dataset.theme === "dark" ? "true" : "false");
+      sync();
+      toggle.addEventListener("click", () => {
+        const next = root.dataset.theme === "dark" ? "light" : "dark";
+        root.dataset.theme = next;
+        try { localStorage.setItem("theme", next); } catch (e) {}
+        sync();
+      });
+      // só liga as transições depois do primeiro desenho, para não animar ao abrir a página
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("ready")));
+    })();
+
+    // UI only: mostra o estado e esconde as mensagens vazias quando chega vídeo.
+    function watchVideo(videoId, boxId) {
+      const video = document.getElementById(videoId);
+      const box = document.getElementById(boxId);
+      video.addEventListener("playing", () => {
+        box.classList.add("has-video");
+        document.body.dataset.state = "live";
+        document.getElementById("status").dataset.state = "live";
+        document.getElementById("statusText").textContent = "Ligado";
+        document.getElementById("connectTitle").textContent = "Telemóvel ligado";
+      });
+    }
+    watchVideo("screenVideo", "screenBox");
+    watchVideo("cameraVideo", "cameraBox");
+
+    // Clicar no ecrã ou na câmara amplia; o X (ou Esc) volta à vista inicial.
+    function setupExpand(boxId) {
+      const box = document.getElementById(boxId);
+      const close = () => { box.classList.remove("expanded"); document.body.style.overflow = ""; };
+      const open = () => {
+        if (!box.classList.contains("has-video")) return;
+        box.classList.add("expanded");
+        document.body.style.overflow = "hidden";
+      };
+      box.addEventListener("click", () => { if (!box.classList.contains("expanded")) open(); });
+      box.addEventListener("keydown", (e) => {
+        if ((e.key === "Enter" || e.key === " ") && e.target === box) { e.preventDefault(); open(); }
+      });
+      box.querySelector(".close").addEventListener("click", (e) => { e.stopPropagation(); close(); });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+    }
+    setupExpand("screenBox");
+    setupExpand("cameraBox");
+
+    document.getElementById("copyBtn").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      const text = document.getElementById("link").textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "Copiado";
+      } catch (err) {
+        const range = document.createRange();
+        range.selectNodeContents(document.getElementById("link"));
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        btn.textContent = "Seleciona e copia";
+      }
+      setTimeout(() => { btn.textContent = "Copiar"; }, 2000);
+    });
   </script>
 </body>
 </html>
