@@ -7,6 +7,7 @@
   <style>
     body { background: #111; color: #fff; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 20px; }
     button { padding: 10px 20px; font-size: 16px; margin: 10px; border-radius: 8px; border: none; cursor: pointer; }
+    #connectionStatus { color: #b8d7ff; overflow-wrap: anywhere; }
   </style>
 </head>
 <body>
@@ -14,13 +15,17 @@
   <p>Página móvel da sessão: <strong>{{ session_id }}</strong></p>
   <p>Clica em "Começar" e aceita os pedidos para partilhar ecrã e câmara.</p>
   <button id="startBtn">Começar</button>
+  <p id="connectionStatus" role="status">Pronto para ligar.</p>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/static/script.js"></script>
   <script>
     const pcPage = false;
-    const sessionId = "{{ session_id }}";
-    document.getElementById("startBtn").onclick = () => startConnection(pcPage, sessionId);
+    const sessionId = {{ session_id | tojson }};
+    document.getElementById("startBtn").onclick = () => {
+      document.getElementById("startBtn").disabled = true;
+      startConnection(pcPage, sessionId);
+    };
   </script>
 </body>
 </html>
