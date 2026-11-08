@@ -1,0 +1,4 @@
+Flask==3.0.3
+Flask-SocketIO==6.3.3
+qrcode==7.4.2
+eventlet==0.33.3

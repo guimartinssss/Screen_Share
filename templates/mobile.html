@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <title>Screen Share - Telemóvel</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { background: #111; color: #fff; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 20px; }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px; border-radius: 8px; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Screen Share</h1>
+  <p>Página móvel da sessão: <strong>{{ session_id }}</strong></p>
+  <p>Clica em "Começar" e aceita os pedidos para partilhar ecrã e câmara.</p>
+  <button id="startBtn">Começar</button>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/static/script.js"></script>
+  <script>
+    const pcPage = false;
+    const sessionId = "{{ session_id }}";
+    document.getElementById("startBtn").onclick = () => startConnection(pcPage, sessionId);
+  </script>
+</body>
+</html>
