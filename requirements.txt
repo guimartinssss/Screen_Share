@@ -1,4 +1,5 @@
 Flask==3.0.3
-Flask-SocketIO==6.3.3
+Flask-SocketIO==5.5.1
 qrcode==7.4.2
+Pillow
 eventlet==0.33.3
