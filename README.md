@@ -16,7 +16,7 @@ The server uses **Flask-SocketIO** for signaling and **WebRTC** for the peer-to-
 Clone the repository or download it as a ZIP, then open a terminal inside the project folder.
 
 ```bash
-git clone <YOUR-GITHUB-REPOSITORY-URL>
+git clone https://github.com/guimartinssss/Screen_Share
 cd Screen_Share
 ```
 
