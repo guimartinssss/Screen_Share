@@ -4,28 +4,194 @@
   <meta charset="utf-8" />
   <title>Screen Share - Telemóvel</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script>
+    try { if (localStorage.getItem("theme") === "dark") document.documentElement.dataset.theme = "dark"; } catch (e) {}
+  </script>
   <style>
-    body { background: #111; color: #fff; text-align: center; font-family: Arial, Helvetica, sans-serif; padding: 20px; }
-    button { padding: 10px 20px; font-size: 16px; margin: 10px; border-radius: 8px; border: none; cursor: pointer; }
-    #connectionStatus { color: #b8d7ff; overflow-wrap: anywhere; }
+    /* Cores registadas para a mudança de tema ser animada (suave) */
+    @property --bg { syntax: "<color>"; inherits: true; initial-value: #e8ebf3; }
+    @property --surface { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+    @property --ink { syntax: "<color>"; inherits: true; initial-value: #131a33; }
+    @property --muted { syntax: "<color>"; inherits: true; initial-value: #5b6482; }
+    @property --line { syntax: "<color>"; inherits: true; initial-value: #d3d8e6; }
+    @property --accent { syntax: "<color>"; inherits: true; initial-value: #2f4bff; }
+    @property --accent-ink { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
+    @property --ok { syntax: "<color>"; inherits: true; initial-value: #0e8f5a; }
+    @property --screen { syntax: "<color>"; inherits: true; initial-value: #0b0f1e; }
+    @property --screen-ink { syntax: "<color>"; inherits: true; initial-value: #8f98bb; }
+    @property --shadow-a { syntax: "<color>"; inherits: true; initial-value: rgba(19, 26, 51, 0.06); }
+    @property --shadow-b { syntax: "<color>"; inherits: true; initial-value: rgba(19, 26, 51, 0.18); }
+    @property --glow1 { syntax: "<color>"; inherits: true; initial-value: rgba(47, 75, 255, 0.20); }
+    @property --glow2 { syntax: "<color>"; inherits: true; initial-value: rgba(200, 134, 27, 0.38); }
+    @property --glow3 { syntax: "<color>"; inherits: true; initial-value: rgba(200, 134, 27, 0.26); }
+    @property --glass { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.52); }
+    @property --glass-line { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.75); }
+    @property --glass-soft { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.45); }
+    @property --dot { syntax: "<color>"; inherits: true; initial-value: rgba(19, 26, 51, 0.16); }
+
+    :root {
+      color-scheme: light;
+      --bg: #e8ebf3;
+      --surface: #ffffff;
+      --ink: #131a33;
+      --muted: #5b6482;
+      --line: #d3d8e6;
+      --accent: #2f4bff;
+      --accent-ink: #ffffff;
+      --ok: #0e8f5a;
+      --screen: #0b0f1e;
+      --screen-ink: #8f98bb;
+      --shadow-a: rgba(19, 26, 51, 0.06);
+      --shadow-b: rgba(19, 26, 51, 0.18);
+      --glow1: rgba(47, 75, 255, 0.20);
+      --glow2: rgba(200, 134, 27, 0.38);
+      --glow3: rgba(200, 134, 27, 0.26);
+      --glass: rgba(255, 255, 255, 0.52);
+      --glass-line: rgba(255, 255, 255, 0.75);
+      --glass-soft: rgba(255, 255, 255, 0.45);
+      --dot: rgba(19, 26, 51, 0.16);
+      --shadow: 0 1px 2px var(--shadow-a), 0 12px 32px -12px var(--shadow-b);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0e1222;
+      --surface: #171c33;
+      --ink: #e9ecfa;
+      --muted: #98a1c4;
+      --line: #2a3152;
+      --accent: #7c8cff;
+      --accent-ink: #0e1222;
+      --ok: #3ddc97;
+      --screen: #05070f;
+      --screen-ink: #7c86ab;
+      --shadow-a: rgba(0, 0, 0, 0.30);
+      --shadow-b: rgba(0, 0, 0, 0.60);
+      --glow1: rgba(88, 110, 255, 0.28);
+      --glow2: rgba(214, 150, 36, 0.34);
+      --glow3: rgba(214, 150, 36, 0.24);
+      --glass: rgba(34, 40, 74, 0.45);
+      --glass-line: rgba(255, 255, 255, 0.14);
+      --glass-soft: rgba(255, 255, 255, 0.07);
+      --dot: rgba(190, 200, 255, 0.16);
+    }
+    :root.ready { transition: --bg 0.55s ease, --surface 0.55s ease, --ink 0.55s ease, --muted 0.55s ease, --line 0.55s ease, --accent 0.55s ease, --accent-ink 0.55s ease, --ok 0.55s ease, --screen 0.55s ease, --screen-ink 0.55s ease, --shadow-a 0.55s ease, --shadow-b 0.55s ease, --glow1 0.55s ease, --glow2 0.55s ease, --glow3 0.55s ease, --glass 0.55s ease, --glass-line 0.55s ease, --glass-soft 0.55s ease, --dot 0.55s ease; }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 20px;
+      background: var(--bg); color: var(--ink);
+      font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+      line-height: 1.5;
+    }
+    /* Fundo: luz suave nos cantos e uma grelha de pontos que se desvanece */
+    body::before, body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+    body::before {
+      background:
+        radial-gradient(900px 520px at 8% -8%, var(--glow1), transparent 65%),
+        radial-gradient(620px 460px at 88% 22%, var(--glow3), transparent 70%),
+        radial-gradient(820px 560px at 96% 108%, var(--glow2), transparent 65%),
+        radial-gradient(560px 420px at 6% 78%, var(--glow1), transparent 70%);
+    }
+    body::after {
+      background-image: radial-gradient(circle, var(--dot) 1.2px, transparent 1.6px);
+      background-size: 24px 24px;
+      -webkit-mask-image: radial-gradient(ellipse 75% 70% at 50% 40%, #000 25%, transparent 100%);
+      mask-image: radial-gradient(ellipse 75% 70% at 50% 40%, #000 25%, transparent 100%);
+    }
+    /* Botão de tema (sol / lua) */
+    .tools { display: flex; align-items: center; gap: 12px; }
+    .toggle {
+      position: relative; flex: none; width: 68px; height: 36px; padding: 0;
+      border-radius: 999px; border: 1px solid var(--glass-line);
+      background: var(--glass-soft); filter: none;
+      box-shadow: inset 0 1px 2px var(--shadow-a);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    }
+    .toggle:hover { filter: none; }
+    .knob {
+      position: absolute; top: 3px; left: 3px; width: 28px; height: 28px; border-radius: 50%;
+      background: #ffffff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      display: grid; place-items: center;
+      transition: transform 0.45s cubic-bezier(0.4, 0.1, 0.2, 1), background-color 0.45s ease;
+    }
+    .knob svg { grid-area: 1 / 1; width: 18px; height: 18px; transition: opacity 0.3s ease, transform 0.5s ease; }
+    .sun { color: #c8861b; }
+    .moon { color: #4a5bd8; opacity: 0; transform: rotate(-70deg) scale(0.5); }
+    :root[data-theme="dark"] .knob { transform: translateX(32px); background: #e9ecfa; }
+    :root[data-theme="dark"] .sun { opacity: 0; transform: rotate(90deg) scale(0.5); }
+    :root[data-theme="dark"] .moon { opacity: 1; transform: none; }
+
+
+    .corner { position: fixed; top: 16px; right: 16px; z-index: 5; }
+    main {
+      width: 100%; max-width: 380px; text-align: center; padding: 32px 24px 28px;
+      border-radius: 28px; background: var(--glass); border: 1px solid var(--glass-line);
+      -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
+      box-shadow: inset 0 1px 0 var(--glass-line), var(--shadow);
+    }
+    .logo { width: 52px; height: 52px; color: var(--accent); margin-bottom: 8px; }
+    h1 { margin: 0 0 8px; font-size: 1.6rem; font-weight: 750; letter-spacing: -0.02em; }
+    p { margin: 0 0 24px; color: var(--muted); }
+    #startBtn {
+      width: 100%; font: inherit; font-weight: 700; font-size: 1.05rem; cursor: pointer;
+      padding: 14px 20px; border-radius: 14px; border: 0;
+      background: var(--accent); color: var(--accent-ink);
+    }
+    #startBtn:active { transform: scale(0.98); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    small { display: block; margin-top: 18px; color: var(--muted); font-size: 0.78rem; word-break: break-all; }
+    @media (prefers-reduced-motion: reduce) {
+      :root.ready { transition: none; }
+      .knob, .knob svg { transition: none; }
+    }
   </style>
 </head>
 <body>
-  <h1>Screen Share</h1>
-  <p>Página móvel da sessão: <strong>{{ session_id }}</strong></p>
-  <p>Clica em "Começar" e aceita os pedidos para partilhar ecrã e câmara.</p>
-  <button id="startBtn">Começar</button>
-  <p id="connectionStatus" role="status">Pronto para ligar.</p>
+  <div class="corner">
+    <button type="button" class="toggle" id="themeToggle" role="switch" aria-checked="false" aria-label="Tema escuro" title="Mudar entre claro e escuro">
+          <span class="knob">
+            <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="currentColor"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+            <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+          </span>
+        </button>
+  </div>
+
+  <main>
+    <svg class="logo" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect x="2" y="6" width="28" height="19" rx="3" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M10 33h12M16 25v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <rect x="24" y="14" width="13" height="22" rx="3" fill="var(--bg)" stroke="currentColor" stroke-width="2.5"/>
+          <circle cx="30.5" cy="32" r="1.4" fill="currentColor"/>
+        </svg>
+    <h1>Screen Share</h1>
+    <p>Toca em Começar e aceita partilhar o ecrã e a câmara com o PC.</p>
+    <button id="startBtn">Começar</button>
+    <small>Sessão: {{ session_id }}</small>
+  </main>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="/static/script.js"></script>
   <script>
     const pcPage = false;
-    const sessionId = {{ session_id | tojson }};
-    document.getElementById("startBtn").onclick = () => {
-      document.getElementById("startBtn").disabled = true;
-      startConnection(pcPage, sessionId);
-    };
+    const sessionId = "{{ session_id }}";
+    document.getElementById("startBtn").onclick = () => startConnection(pcPage, sessionId);
+
+    // Tema claro / escuro (guarda a escolha neste browser)
+    (function () {
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
+      const sync = () => toggle.setAttribute("aria-checked", root.dataset.theme === "dark" ? "true" : "false");
+      sync();
+      toggle.addEventListener("click", () => {
+        const next = root.dataset.theme === "dark" ? "light" : "dark";
+        root.dataset.theme = next;
+        try { localStorage.setItem("theme", next); } catch (e) {}
+        sync();
+      });
+      // só liga as transições depois do primeiro desenho, para não animar ao abrir a página
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add("ready")));
+    })();
+
   </script>
 </body>
 </html>
